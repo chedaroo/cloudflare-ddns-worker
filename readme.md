@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/chedaroo/cloudflare-ddns-worker/graph/badge.svg?token=04T2XKE4PO)](https://codecov.io/gh/chedaroo/cloudflare-ddns-worker)
+
 ## 📡 Cloudflare Dynamic DNS Worker
 
 This Cloudflare Worker provides a secure, dynamic DNS update endpoint. It accepts public IP updates from routers or scripts and uses Cloudflare’s API to update or create `A`, `AAAA`, or `CNAME` records as needed.
