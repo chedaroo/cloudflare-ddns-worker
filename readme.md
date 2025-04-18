@@ -1,4 +1,6 @@
 [![codecov](https://codecov.io/gh/chedaroo/cloudflare-ddns-worker/graph/badge.svg?token=04T2XKE4PO)](https://codecov.io/gh/chedaroo/cloudflare-ddns-worker)
+![ci](https://github.com/chedaroo/cloudflare-ddns-worker/actions/workflows/ci.yml/badge.svg)
+![release](https://img.shields.io/github/v/release/chedaroo/cloudflare-ddns-worker?style=flat)
 
 ## 📡 Cloudflare Dynamic DNS Worker
 
