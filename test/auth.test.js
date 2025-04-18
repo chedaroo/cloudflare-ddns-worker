@@ -1,12 +1,12 @@
-import { validateBasicAuth, unauthorizedResponse } from '../src/utils/auth.js';
 import { describe, it, expect } from 'vitest';
+import { validateBasicAuth, unauthorizedResponse } from '../src/utils/auth.js';
 
-function createRequestWithAuth(username, password) {
-	const creds = btoa(`${username}:${password}`);
-	const headers = new Headers({
-		Authorization: `Basic ${creds}`,
+function createRequestWithAuthHeader(headerValue) {
+	return new Request('https://example.com', {
+		headers: {
+			Authorization: headerValue,
+		},
 	});
-	return new Request('https://example.com', { headers });
 }
 
 describe('validateBasicAuth', () => {
@@ -16,22 +16,41 @@ describe('validateBasicAuth', () => {
 	};
 
 	it('returns true for correct credentials', () => {
-		const req = createRequestWithAuth('user', 'pass');
+		const creds = btoa('user:pass');
+		const req = createRequestWithAuthHeader(`Basic ${creds}`);
 		expect(validateBasicAuth(req, env)).toBe(true);
 	});
 
 	it('returns false for incorrect username', () => {
-		const req = createRequestWithAuth('wrong', 'pass');
+		const creds = btoa('wrong:pass');
+		const req = createRequestWithAuthHeader(`Basic ${creds}`);
 		expect(validateBasicAuth(req, env)).toBe(false);
 	});
 
 	it('returns false for incorrect password', () => {
-		const req = createRequestWithAuth('user', 'wrong');
+		const creds = btoa('user:wrong');
+		const req = createRequestWithAuthHeader(`Basic ${creds}`);
 		expect(validateBasicAuth(req, env)).toBe(false);
 	});
 
 	it('returns false when Authorization header is missing', () => {
 		const req = new Request('https://example.com');
+		expect(validateBasicAuth(req, env)).toBe(false);
+	});
+
+	it('returns false when Authorization header is not Basic', () => {
+		const req = createRequestWithAuthHeader('Bearer sometoken');
+		expect(validateBasicAuth(req, env)).toBe(false);
+	});
+
+	it('returns false for malformed base64 string', () => {
+		const req = createRequestWithAuthHeader('Basic not-base64-@@@');
+		expect(validateBasicAuth(req, env)).toBe(false);
+	});
+
+	it('returns false if base64 decodes but has wrong format (no colon)', () => {
+		const creds = btoa('userpass'); // no colon
+		const req = createRequestWithAuthHeader(`Basic ${creds}`);
 		expect(validateBasicAuth(req, env)).toBe(false);
 	});
 });
