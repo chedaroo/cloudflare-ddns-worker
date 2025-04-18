@@ -22,28 +22,67 @@ describe('handleRequest', () => {
 		fetch.mockReset();
 	});
 
-	it('creates a new record if none exists', async () => {
-		// 1st fetch: getZoneId
-		fetch.mockResolvedValueOnce({
-			ok: true,
-			json: async () => ({ result: [{ id: 'zone123' }] }),
-		});
+	it('returns 401 if auth is missing', async () => {
+		const req = new Request('https://example.com/update?hostname=a.com&ip=1.1.1.1');
+		const res = await handleRequest(req, env);
+		expect(res.status).toBe(401);
+		const body = await res.text();
+		expect(body).toBe('Unauthorized');
+	});
 
-		// 2nd fetch: getDnsRecord (returns no record)
+	it('returns 401 if auth is invalid', async () => {
+		const req = makeAuthedRequest('hostname=a.com&ip=1.1.1.1', 'invalid', 'wrong');
+		const res = await handleRequest(req, env);
+		expect(res.status).toBe(401);
+		const body = await res.text();
+		expect(body).toBe('Unauthorized');
+	});
+
+	it('returns 404 if zone ID is not found', async () => {
+		// getZoneId returns no results
 		fetch.mockResolvedValueOnce({
 			ok: true,
 			json: async () => ({ result: [] }),
 		});
 
-		// 3rd fetch: createDnsRecord
-		fetch.mockResolvedValueOnce({
-			ok: true,
-			json: async () => ({ result: { id: 'created', name: 'home.example.com' } }),
-		});
+		const req = makeAuthedRequest('hostname=home.example.com&ip=1.2.3.4');
+		const res = await handleRequest(req, env);
+		expect(res.status).toBe(404);
+		const body = await res.text();
+		expect(body).toMatch(/Zone not found/);
+	});
+
+	it('returns 500 if an unexpected error is thrown', async () => {
+		// Simulate failure in getZoneId
+		fetch.mockRejectedValueOnce(new Error('fail'));
 
 		const req = makeAuthedRequest('hostname=home.example.com&ip=1.2.3.4');
 		const res = await handleRequest(req, env);
+		expect(res.status).toBe(500);
+		const body = await res.text();
+		expect(body).toMatch(/Error: fail/);
+	});
 
+	it('creates a new record if none exists', async () => {
+		fetch
+			// getZoneId
+			.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({ result: [{ id: 'zone123' }] }),
+			})
+			// getDnsRecord
+			.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({ result: [] }),
+			})
+			// createDnsRecord
+			.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({ result: { id: 'created', name: 'home.example.com' } }),
+			});
+
+		const req = makeAuthedRequest('hostname=home.example.com&ip=1.2.3.4');
+		const res = await handleRequest(req, env);
 		expect(res.status).toBe(200);
 		const body = await res.json();
 		expect(body.result.name).toBe('home.example.com');
@@ -116,8 +155,16 @@ describe('handleRequest', () => {
 		expect(body).toBe('Record unchanged');
 	});
 
-	it('handles missing query params', async () => {
+	it('returns 500 for missing query params', async () => {
 		const req = makeAuthedRequest('hostname=missing.com');
+		const res = await handleRequest(req, env);
+		expect(res.status).toBe(500);
+		const body = await res.text();
+		expect(body).toMatch(/Missing hostname or ip/);
+	});
+
+	it('returns 500 for empty query values', async () => {
+		const req = makeAuthedRequest('hostname=&ip=');
 		const res = await handleRequest(req, env);
 		expect(res.status).toBe(500);
 		const body = await res.text();
