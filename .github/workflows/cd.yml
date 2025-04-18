@@ -1,0 +1,18 @@
+name: CD
+
+on:
+  workflow_run:
+    branches: main
+    types: completed
+    workflows: CI
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/cd-release.yml
