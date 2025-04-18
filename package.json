@@ -4,6 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"coverage": "vitest run --coverage",
 		"dev": "wrangler dev",
 		"delete": "wrangler delete",
 		"deploy": "node scripts/deploy.js",
@@ -13,6 +14,7 @@
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.7.5",
+		"@vitest/coverage-istanbul": "^3.0.9",
 		"vitest": "~3.0.7",
 		"wrangler": "^4.12.0"
 	},
