@@ -4,7 +4,7 @@ export default defineWorkersConfig({
 	test: {
 		coverage: {
 			provider: 'istanbul',
-			reporter: ['text', 'html'],
+			reporter: ['text', 'lcov', 'html'],
 			exclude: [
 				'scripts/**',
 				'test/**', // ✅ optional: ignore tests themselves
