@@ -17,6 +17,6 @@ export default defineWorkersConfig({
 				wrangler: { configPath: './wrangler.jsonc' },
 			},
 		},
-		reporters: ['default', 'github'],
+		reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
 	},
 });
